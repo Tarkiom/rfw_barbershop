@@ -13,7 +13,7 @@ local Opti = {}
 for k,v in pairs(BarberShop) do
     RegisterActionZone({name = "BarberShop", pos = v}, "[~b~E~w~]Pour acceder au barber", function()
         OpenBarberShop()
-        FreezeEntityPosition(GetPlayerPed(-1), true)
+        FreezeEntityPosition(PlayerPedId(), true)
         SetEntityInvincible(PlayerPedId(), true)
         DrawMissionText("~g~Invincible",2500)
     end)
@@ -40,7 +40,7 @@ end
 local open = false
 RMenu.Add('core', 'barbershop', RageUI.CreateMenu("Barber Shop", "~b~Barber Shop"))
 RMenu:Get('core', 'barbershop').Closed = function()   
-    FreezeEntityPosition(GetPlayerPed(-1), false)
+    FreezeEntityPosition(PlayerPedId(), false)
     SetEntityInvincible(PlayerPedId(), false)
     DrawMissionText("~r~Invincibilité désactivé.", 2500)
     open = false
@@ -131,9 +131,9 @@ function OpenBarberShopThread()
                             ClearPedTasks(GetPlayerPed(-1))
                             local pos = GetOffsetFromEntityInWorldCoords(GetPlayerPed(-1), 0.0, -5.0, 0.0)
                             TaskTurnPedToFaceCoord(GetPlayerPed(-1), pos, 3000)
-                            FreezeEntityPosition(GetPlayerPed(-1), false)
+                            FreezeEntityPosition(PlayerPedId(), false)
                             Wait(1500)
-                            FreezeEntityPosition(GetPlayerPed(-1), true)                       
+                            FreezeEntityPosition(PlayerPedId(), true)                       
                         end
                     end)
                     if v.c ~= nil then
