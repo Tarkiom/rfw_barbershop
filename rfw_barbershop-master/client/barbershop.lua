@@ -11,7 +11,7 @@ local BarberShop = {
 local Opti = {}
 
 for k,v in pairs(BarberShop) do
-    RegisterActionZone({name = "BarberShop", pos = v}, "[~b~E~w~]~w~ Pour acceder au barber", function()
+    RegisterActionZone({name = "BarberShop", pos = v}, "[~b~E~w~]Pour acceder au barber", function()
         OpenBarberShop()
         FreezeEntityPosition(GetPlayerPed(-1), true)
         SetEntityInvincible(PlayerPedId(), true)
