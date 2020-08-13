@@ -1,6 +1,6 @@
 local BarberShop = {
     vector3(-814.3, -183.8, 36.6),
-	vector3(136.8, -1708.4, 28.3),
+	vector3(136.8, -1708.4, 29.3),
 	vector3(-1282.6, -1116.8, 6.0),
 	vector3(1931.5, 3729.7, 31.8),
 	vector3(1212.8, -472.9, 65.2),
@@ -11,8 +11,11 @@ local BarberShop = {
 local Opti = {}
 
 for k,v in pairs(BarberShop) do
-    RegisterActionZone({name = "BarberShop", pos = v}, "Press ~INPUT_PICKUP~ to do action", function()
+    RegisterActionZone({name = "BarberShop", pos = v}, "[~b~E~w~]~w~ Pour acceder au barber", function()
         OpenBarberShop()
+        FreezeEntityPosition(GetPlayerPed(-1), true)
+        SetEntityInvincible(PlayerPedId(), true)
+        DrawMissionText("~g~Invincible",2500)
     end)
 end
 
@@ -36,7 +39,10 @@ end
 
 local open = false
 RMenu.Add('core', 'barbershop', RageUI.CreateMenu("Barber Shop", "~b~Barber Shop"))
-RMenu:Get('core', 'barbershop').Closed = function()
+RMenu:Get('core', 'barbershop').Closed = function()   
+    FreezeEntityPosition(GetPlayerPed(-1), false)
+    SetEntityInvincible(PlayerPedId(), false)
+    DrawMissionText("~r~Invincibilité désactivé.", 2500)
     open = false
 end;
 
@@ -48,13 +54,22 @@ RMenu.Add('core', "tenues", RageUI.CreateSubMenu(RMenu:Get('core', 'barbershop')
 RMenu:Get('core', "tenues").Closed = function()
 end;
 
+
+
 local hair = {}
 function GetClothValues()
     local playerPed = PlayerPedId()
     local _hair = {                                                                             
         {price = 24, label = "Coupe de cheuveux", r = "hair_color_1",        item = "hair_1", 	max = GetNumberOfPedDrawableVariations		(playerPed, 2) - 1,	 min = 0,},
-        {price = 12, label = "Couleur des cheuveux",       c = 8, o = "hair_1",  		item = "hair_color_1", 	                                                                     min = 0,},
-        {price = 12, label = "Varation des cheuveux",       c = 8, o = "hair_1",  		item = "hair_color_2", 	                                                                     min = 0,},
+        {price = 12, label = "Couleur des cheuveux",   o = "hair_1",  		item = "hair_color_1", 	      max = GetNumHairColors()-1 ,  min = 0,},
+      {price = 12, label = "Couleur des cheveux secondaire",       o = "hair_color_2",  		item = "hair_color_2", 	      max = GetNumHairColors()-1, min = 0,},
+     {price = 12, label = "Taille de la barbe",        o = "beard_2",  		item = "beard_2", 	     max = 10,           min = 0,},   
+     {price = 24, label = "Type de barbe", r = "beard_1",        item = "beard_1", 	max = GetNumHeadOverlayValues(1)-1,	 min = 0,},
+     {price = 24, label = "Couleur de la barbe", r = "beard_3",        item = "beard_3", 	max = GetNumHairColors()-1,	 min = 0,},
+     {price = 12, label = "Taille des sourcils",        o = "eyebrows_2",  		item = "eyebrows_2", 	     max = 10,         min = 0,},   
+     {price = 12, label = "Type  des sourcils",        o = "eyebrows_1",  		item = "eyebrows_1", 	     max = GetNumHeadOverlayValues(2)-1,       min = 0,},   
+     {price = 12, label = "Couleur des sourcils",        o = "eyebrows_3",  		item = "eyebrows_3", 	     max = GetNumHairColors()-1,       min = 0,},   
+
     }
         hair = _hair
 end
@@ -62,7 +77,7 @@ end
 Citizen.CreateThread(function()
     GetClothValues()
     for k,v in pairs(hair) do
-        RMenu.Add('core', v.item.."1", RageUI.CreateSubMenu(RMenu:Get('core', 'tenues_create'), "Cloth Shop", "~b~Clotch Menu."))
+        RMenu.Add('core', v.item.."1", RageUI.CreateSubMenu(RMenu:Get('core', 'tenues_create'), "Barbershop", "~b~Barber shop."))
         RMenu:Get('core', v.item.."1").Closed = function()
         end
     end
@@ -70,6 +85,7 @@ end)
 
 
 function OpenBarberShop()
+    hasPaid = false
     RageUI.Visible(RMenu:Get('core', 'barbershop'), not RageUI.Visible(RMenu:Get('core', 'barbershop')))
     OpenBarberShopThread()
     GetClothValues()
@@ -81,7 +97,6 @@ function OpenBarberShopThread()
     Citizen.CreateThread(function()
         open = true
         while open do
-
             if IsControlJustReleased(1, 22) then
                 ClearPedTasks(GetPlayerPed(-1))
                 local coords = GetOffsetFromEntityInWorldCoords(GetPlayerPed(-1), 0.0, -5.0, 0.0)
@@ -91,8 +106,9 @@ function OpenBarberShopThread()
             Wait(1)
 
             RageUI.IsVisible(RMenu:Get('core', 'barbershop'), true, true, true, function()
-                RageUI.ButtonWithStyle("Faire une nouvelle coupe de cheuveux", nil, { RightLabel = "→→" }, true, function()
+                RageUI.ButtonWithStyle("Se relooker", nil, { RightLabel = "→→" }, true, function()
                 end, RMenu:Get('core', 'tenues_create'))
+
 
             end, function()
             end)
@@ -115,6 +131,9 @@ function OpenBarberShopThread()
                             ClearPedTasks(GetPlayerPed(-1))
                             local pos = GetOffsetFromEntityInWorldCoords(GetPlayerPed(-1), 0.0, -5.0, 0.0)
                             TaskTurnPedToFaceCoord(GetPlayerPed(-1), pos, 3000)
+                            FreezeEntityPosition(GetPlayerPed(-1), false)
+                            Wait(1500)
+                            FreezeEntityPosition(GetPlayerPed(-1), true)                       
                         end
                     end)
                     if v.c ~= nil then
@@ -152,11 +171,10 @@ function OpenBarberShopThread()
                                 local rmv = v.price
                                 TriggerServerEvent("rFw:RemoveMoney", id , rmv)
                                 ShowNotification("Vous avez payer ~r~"..rmv.."~w~ $ .~g~ Merci de votre confiance !")
-
                                end
                                if h then
                                     if Opti[k] ~= i then
-                                        TriggerEvent("skinchanger:change", v.item, i)
+                                        TriggerEvent("skinchanger:change", v.item, i)                     
                                         Opti[k] = i
                                     end
                                end
@@ -170,3 +188,15 @@ function OpenBarberShopThread()
         end
     end)
 end
+
+Citizen.CreateThread(function()
+    local hash = GetHashKey("s_f_m_fembarber")
+    while not HasModelLoaded(hash) do
+    RequestModel(hash)
+    Wait(20)
+    end
+    ped = CreatePed("PED_TYPE_CIVFEMA", "s_f_m_fembarber", 134.851, -1707.744, 28.291, 137.203, true, true)
+    SetBlockingOfNonTemporaryEvents(ped, true)
+    SetEntityInvincible(ped, true)
+    FreezeEntityPosition(ped, true)
+end)
